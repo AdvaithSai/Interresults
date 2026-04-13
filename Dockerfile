@@ -16,11 +16,11 @@ RUN apt-get update -qq -y && \
         && apt-get clean \
         && rm -rf /var/lib/apt/lists/*
 
-# Install Google Chrome Stable
-RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
-    && apt-get update -qq -y \
-    && apt-get install -y ./google-chrome-stable_current_amd64.deb \
-    && rm ./google-chrome-stable_current_amd64.deb \
+# Install Chromium and Chromium Driver (much more stable for Docker)
+RUN apt-get update -qq -y \
+    && apt-get install -y --no-install-recommends \
+        chromium \
+        chromium-driver \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

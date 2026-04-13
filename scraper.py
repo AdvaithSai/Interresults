@@ -34,6 +34,7 @@ import config as cfg
 # ══════════════════════════════════════════════════════════════════════════════
 
 import platform
+import os
 
 def setup_driver() -> webdriver.Chrome:
     options = webdriver.ChromeOptions()
@@ -43,16 +44,17 @@ def setup_driver() -> webdriver.Chrome:
     
     # Cloud / Docker compatibility
     if platform.system() != "Windows":
+        options.binary_location = "/usr/bin/chromium"
         options.add_argument("--headless=new")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-gpu")
+        service = Service("/usr/bin/chromedriver")
+    else:
+        # Standard behaviour for Local Windows
+        driver_path = ChromeDriverManager().install()
+        service = Service(driver_path)
         
-    driver_path = ChromeDriverManager().install()
-    if "THIRD_PARTY_NOTICES" in driver_path:
-        driver_path = driver_path.replace("THIRD_PARTY_NOTICES.chromedriver", "chromedriver")
-        
-    service = Service(driver_path)
     driver = webdriver.Chrome(service=service, options=options)
     driver.set_window_size(1400, 900)
     return driver
