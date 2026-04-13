@@ -48,7 +48,11 @@ def setup_driver() -> webdriver.Chrome:
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-gpu")
         
-    service = Service(ChromeDriverManager().install())
+    driver_path = ChromeDriverManager().install()
+    if "THIRD_PARTY_NOTICES" in driver_path:
+        driver_path = driver_path.replace("THIRD_PARTY_NOTICES.chromedriver", "chromedriver")
+        
+    service = Service(driver_path)
     driver = webdriver.Chrome(service=service, options=options)
     driver.set_window_size(1400, 900)
     return driver
