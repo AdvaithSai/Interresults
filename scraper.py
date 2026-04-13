@@ -219,25 +219,23 @@ def extract_all_data(driver) -> dict:
     if (marksTable) {
         var rows = Array.from(marksTable.querySelectorAll('tr'));
 
-        // ── Detect group from PART-III header cell ─────────────────────────
-        // MPC header: 'MATHEMATICS A\nMATHEMATICS B\nPHYSICS\nCHEMISTRY'
-        // BPC header: 'BOTANY\nZOOLOGY\nPHYSICS\nCHEMISTRY'
-        // MEC header: 'MATHEMATICS A\nMATHEMATICS B\nECONOMICS\nCOMMERCE'
-        var group = 'MPC';   // default
+        var headerText = "";
         for (var hrow of rows) {
             var hcells = Array.from(hrow.querySelectorAll('td, th'));
             for (var hc of hcells) {
-                var ht = hc.innerText.trim().toUpperCase();
-                if (ht.includes('BOTANY') || ht.includes('ZOOLOGY')) {
-                    group = 'BPC'; break;
-                }
-                if (ht.includes('ECONOMICS') || ht.includes('COMMERCE')) {
-                    group = 'MEC'; break;
-                }
-                if (ht.includes('MATHEMATICS') || ht.includes('PHYSICS')) {
-                    group = 'MPC'; break;
-                }
+                headerText += " " + hc.innerText.trim().toUpperCase();
             }
+        }
+        
+        var group = 'MPC';   // default
+        if (headerText.includes('BOTANY') || headerText.includes('ZOOLOGY')) {
+            group = 'BPC';
+        } else if (headerText.includes('HISTORY') || headerText.includes('CIVICS') || headerText.includes('POLITICAL SCIENCE')) {
+            group = 'HEC';
+        } else if (headerText.includes('ECONOMICS') || headerText.includes('COMMERCE')) {
+            group = 'MEC';
+        } else if (headerText.includes('MATHEMATICS') || headerText.includes('PHYSICS')) {
+            group = 'MPC';
         }
         result['Group'] = group;
 
@@ -245,6 +243,8 @@ def extract_all_data(driver) -> dict:
         var p3keys;
         if (group === 'BPC') {
             p3keys = ['Botany', 'Zoology', 'Physics', 'Chemistry'];
+        } else if (group === 'HEC') {
+            p3keys = ['Economics', 'History', 'Civics'];
         } else if (group === 'MEC') {
             p3keys = ['Maths_A', 'Maths_B', 'Economics', 'Commerce'];
         } else {
@@ -435,10 +435,10 @@ def save_excel(data: list[dict], path: str):
         "Medium":      "Medium",
         "Y1_Eng_Theory": "1Y English (Theory)",
         "Y1_Eng_Prac":   "1Y English (Prac)",
-        "Y1_Sanskrit":   "1Y Sanskrit",
+        "Y1_Sanskrit":   "1Y 2nd Language",
         "Y2_Eng_Theory": "2Y English (Theory)",
         "Y2_Eng_Prac":   "2Y English (Prac)",
-        "Y2_Sanskrit":   "2Y Sanskrit",
+        "Y2_Sanskrit":   "2Y 2nd Language",
         "PR_Physics":    "Practical Physics",
         "PR_Chemistry":  "Practical Chemistry",
         "Grand_Total":   "Grand Total",
@@ -469,6 +469,12 @@ def save_excel(data: list[dict], path: str):
         "Y2_Economics": "2Y Economics", "Y2_Commerce":  "2Y Commerce",
     }
 
+    hec_rename = {
+        **common_rename,
+        "Y1_Economics": "1Y Economics", "Y1_History":   "1Y History", "Y1_Civics":    "1Y Civics",
+        "Y2_Economics": "2Y Economics", "Y2_History":   "2Y History", "Y2_Civics":    "2Y Civics",
+    }
+
     # ── Column order helpers ──────────────────────────────────────────────────
     first_cols = ["Hall Ticket No", "Regd No", "Name",
                   "Father's Name", "Mother's Name", "Gender", "Medium"]
@@ -480,11 +486,12 @@ def save_excel(data: list[dict], path: str):
                 + mid
                 + [c for c in last_cols  if c in df_renamed.columns])
 
-    # ── Split into MPC / BPC / MEC ───────────────────────────────────────────────
+    # ── Split into MPC / BPC / MEC / HEC ───────────────────────────────────────────────
     grp = df.get("Group", pd.Series(["MPC"] * len(df)))
     mpc_data = df[grp == "MPC"].copy()
     bpc_data = df[grp == "BPC"].copy()
     mec_data = df[grp == "MEC"].copy()
+    hec_data = df[grp == "HEC"].copy()
 
     output_path = Path(path)
     with pd.ExcelWriter(output_path, engine="openpyxl") as writer:
@@ -493,6 +500,7 @@ def save_excel(data: list[dict], path: str):
             ("MPC", mpc_data, mpc_rename),
             ("BPC", bpc_data, bpc_rename),
             ("MEC", mec_data, mec_rename),
+            ("HEC", hec_data, hec_rename),
         ]:
             if sheet_df.empty:
                 continue
