@@ -1,0 +1,9 @@
+__pycache__
+*.pyc
+*.pyo
+venv
+.env
+.git
+tesseract-installer.exe
+*.xlsx
+failed_rolls.txt

@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TGBIE Marks Automation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0b0f1a;
+      --surface: rgba(255,255,255,0.04);
+      --surface-hover: rgba(255,255,255,0.08);
+      --border: rgba(255,255,255,0.08);
+      --border-focus: rgba(99,102,241,0.5);
+      --text: #e2e8f0;
+      --text-dim: #94a3b8;
+      --accent: #818cf8;
+      --accent-glow: rgba(129,140,248,0.25);
+      --gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+      --success: #34d399;
+      --error: #f87171;
+      --warn: #fbbf24;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Animated background ───────────────────── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 600px 400px at 20% 20%, rgba(99,102,241,0.12), transparent),
+        radial-gradient(ellipse 500px 500px at 80% 80%, rgba(168,85,247,0.10), transparent),
+        radial-gradient(ellipse 400px 300px at 50% 50%, rgba(236,72,153,0.06), transparent);
+      pointer-events: none; z-index: 0;
+      animation: bgPulse 8s ease-in-out infinite alternate;
+    }
+    @keyframes bgPulse {
+      0%   { opacity: .6; }
+      100% { opacity: 1; }
+    }
+
+    .container {
+      position: relative; z-index: 1;
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    /* ── Header ────────────────────────────────── */
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .header .badge {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 100px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+    .header h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.2;
+    }
+    .header p {
+      color: var(--text-dim);
+      margin-top: 8px;
+      font-size: 15px;
+    }
+
+    /* ── Glass Card ─────────────────────────────── */
+    .card {
+      background: var(--surface);
+      backdrop-filter: blur(24px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 20px;
+      transition: border-color .3s;
+    }
+    .card:hover { border-color: rgba(255,255,255,0.12); }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent);
+      margin-bottom: 18px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-title::before {
+      content: '';
+      width: 4px; height: 18px;
+      background: var(--gradient);
+      border-radius: 2px;
+    }
+
+    /* ── Settings Row ──────────────────────────── */
+    .settings-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .setting-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+    .setting-group select {
+      width: 100%;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      cursor: pointer;
+      transition: border-color .2s;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+    .setting-group select:focus { border-color: var(--border-focus); }
+    .setting-group select option { background: #1e293b; color: #e2e8f0; }
+
+    /* ── Radio buttons (Exam Year) ─────────────── */
+    .radio-row {
+      display: flex; gap: 12px; margin-top: 4px;
+    }
+    .radio-pill {
+      position: relative;
+      flex: 1;
+    }
+    .radio-pill input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .radio-pill label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 10px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .25s ease;
+      text-align: center;
+      color: var(--text-dim);
+      background: transparent;
+    }
+    .radio-pill input:checked + label {
+      border-color: var(--accent);
+      color: #fff;
+      background: var(--accent-glow);
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+    .radio-pill label:hover {
+      border-color: rgba(255,255,255,0.18);
+      color: var(--text);
+    }
+
+    /* ── Dropzone ──────────────────────────────── */
+    .dropzone {
+      border: 2px dashed rgba(255,255,255,0.12);
+      border-radius: var(--radius);
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .3s ease;
+      position: relative;
+    }
+    .dropzone:hover, .dropzone.dragging {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+    }
+    .dropzone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    }
+    .dropzone-icon {
+      font-size: 42px;
+      margin-bottom: 12px;
+      filter: grayscale(.4);
+    }
+    .dropzone h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .dropzone p {
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+    .dropzone .formats {
+      margin-top: 12px;
+      display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+    }
+    .dropzone .formats span {
+      padding: 3px 10px;
+      border-radius: 100px;
+      background: rgba(255,255,255,0.06);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-dim);
+    }
+
+    /* ── File list ─────────────────────────────── */
+    .file-list { margin-top: 14px; }
+    .file-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 6px;
+      font-size: 13px;
+      animation: slideIn .3s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .file-item .name { flex: 1; font-weight: 500; }
+    .file-item .size { color: var(--text-dim); font-size: 12px; }
+    .file-item .remove {
+      background: none; border: none;
+      color: var(--error); cursor: pointer;
+      font-size: 18px; line-height: 1;
+      opacity: .6; transition: opacity .2s;
+    }
+    .file-item .remove:hover { opacity: 1; }
+
+    /* ── Textarea ──────────────────────────────── */
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 14px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      transition: border-color .2s;
+    }
+    textarea:focus { border-color: var(--border-focus); }
+    textarea::placeholder { color: rgba(255,255,255,0.2); }
+
+    /* ── Preview (extracted rolls) ──────────────── */
+    .roll-preview {
+      max-height: 200px;
+      overflow-y: auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 4px 0;
+    }
+    .roll-tag {
+      padding: 5px 12px;
+      background: rgba(99,102,241,0.12);
+      border: 1px solid rgba(99,102,241,0.25);
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent);
+      animation: popIn .25s ease;
+    }
+    @keyframes popIn {
+      0%   { opacity: 0; transform: scale(.8); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    .count-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px;
+      background: rgba(52,211,153,0.1);
+      border: 1px solid rgba(52,211,153,0.25);
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--success);
+      margin-bottom: 12px;
+    }
+
+    /* ── Buttons ────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 32px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .25s ease;
+      letter-spacing: .3px;
+    }
+    .btn-primary {
+      width: 100%;
+      background: var(--gradient);
+      color: #fff;
+      box-shadow: 0 4px 24px rgba(99,102,241,0.3);
+    }
+    .btn-primary:hover:not(:disabled) {
+      box-shadow: 0 6px 32px rgba(99,102,241,0.45);
+      transform: translateY(-1px);
+    }
+    .btn-primary:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .btn-download {
+      width: 100%;
+      background: rgba(52,211,153,0.12);
+      border: 1.5px solid rgba(52,211,153,0.35);
+      color: var(--success);
+    }
+    .btn-download:hover {
+      background: rgba(52,211,153,0.2);
+      box-shadow: 0 4px 20px rgba(52,211,153,0.2);
+    }
+
+    /* ── Log panel ─────────────────────────────── */
+    .log-panel {
+      background: rgba(0,0,0,0.35);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      max-height: 360px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      line-height: 1.7;
+      color: var(--text-dim);
+    }
+    .log-panel .log-line {
+      animation: slideIn .2s ease;
+    }
+    .log-panel .log-line.error { color: var(--error); }
+    .log-panel .log-line.success { color: var(--success); }
+
+    /* ── Progress bar ──────────────────────────── */
+    .progress-wrap {
+      margin-bottom: 16px;
+    }
+    .progress-header {
+      display: flex; justify-content: space-between;
+      font-size: 13px; font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .progress-header .label { color: var(--text); }
+    .progress-header .pct { color: var(--accent); }
+    .progress-bar {
+      height: 6px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--gradient);
+      border-radius: 100px;
+      transition: width .4s ease;
+    }
+
+    /* ── Warnings ───────────────────────────────── */
+    .warn-box {
+      padding: 10px 14px;
+      background: rgba(251,191,36,0.08);
+      border: 1px solid rgba(251,191,36,0.2);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      color: var(--warn);
+      margin-top: 10px;
+    }
+
+    /* ── Hidden util ───────────────────────────── */
+    .hidden { display: none !important; }
+
+    /* ── Responsive ─────────────────────────────── */
+    @media (max-width: 600px) {
+      .settings-grid { grid-template-columns: 1fr; }
+      .header h1 { font-size: 1.7rem; }
+      .container { padding: 24px 14px 60px; }
+    }
+
+    /* ── Spinner ────────────────────────────────── */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2.5px solid rgba(255,255,255,0.2);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Header -->
+    <div class="header">
+      <div class="badge">Telangana Board of Intermediate Education</div>
+      <h1>Marks Automation</h1>
+      <p>Upload files or enter roll numbers → download marksheet results</p>
+    </div>
+
+    <!-- Settings -->
+    <div class="card">
+      <div class="card-title">Exam Settings</div>
+
+      <div style="margin-bottom:18px;">
+        <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;">Exam Year</label>
+        <div class="radio-row">
+          <div class="radio-pill">
+            <input type="radio" name="exam_year" id="ey_first" value="First Year" />
+            <label for="ey_first">1st Year</label>
+          </div>
+          <div class="radio-pill">
+            <input type="radio" name="exam_year" id="ey_second" value="Second Year" checked />
+            <label for="ey_second">2nd Year</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-grid">
+        <div class="setting-group">
+          <label for="results_year">Results Year</label>
+          <select id="results_year">
+            <option value="2026" selected>2026</option>
+            <option value="2025">2025</option>
+            <option value="2024">2024</option>
+            <option value="2023">2023</option>
+            <option value="2022">2022</option>
+            <option value="2021">2021</option>
+            <option value="2020">2020</option>
+          </select>
+        </div>
+        <div class="setting-group">
+          <label for="category">Category</label>
+          <select id="category">
+            <option value="General" selected>General</option>
+            <option value="Vocational">Vocational</option>
+            <option value="General Bridge Course">General Bridge Course</option>
+            <option value="Vocational Bridge Course">Vocational Bridge Course</option>
+          </select>
+        </div>
+        <div class="setting-group">
+          <label for="exam_type">Exam Type</label>
+          <select id="exam_type">
+            <option value="IPE" selected>IPE</option>
+            <option value="IPASE">IPASE</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload -->
+    <div class="card">
+      <div class="card-title">Upload Files</div>
+      <div class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" multiple accept=".csv,.xlsx,.xls,.txt,.jpg,.jpeg,.png,.pdf" />
+        <div class="dropzone-icon">📁</div>
+        <h3>Drop files here or click to browse</h3>
+        <p>Upload files containing roll numbers</p>
+        <div class="formats">
+          <span>CSV</span><span>XLSX</span><span>TXT</span><span>JPG</span><span>PNG</span><span>PDF</span>
+        </div>
+      </div>
+      <div class="file-list" id="fileList"></div>
+    </div>
+
+    <!-- Manual Entry -->
+    <div class="card">
+      <div class="card-title">Manual Entry</div>
+      <textarea id="manualInput" placeholder="Paste or type roll numbers here (10-digit numbers)&#10;e.g. 2658266175, 2658266182&#10;&#10;Separated by commas, spaces, or new lines…"></textarea>
+    </div>
+
+    <!-- Extract Button -->
+    <button class="btn btn-primary" id="extractBtn" onclick="extractRolls()">
+      🔍 &nbsp;Extract Roll Numbers
+    </button>
+
+    <!-- Preview -->
+    <div class="card hidden" id="previewCard" style="margin-top:20px;">
+      <div class="card-title">Extracted Roll Numbers</div>
+      <div class="count-badge" id="rollCount">0 roll numbers found</div>
+      <div id="warnings"></div>
+      <div class="roll-preview" id="rollPreview"></div>
+      <div style="margin-top:18px;">
+        <button class="btn btn-primary" id="runBtn" onclick="runScraper()">
+          🚀 &nbsp;Get Results
+        </button>
+      </div>
+    </div>
+
+    <!-- Progress / Results -->
+    <div class="card hidden" id="progressCard" style="margin-top:20px;">
+      <div class="card-title">Progress</div>
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-header">
+          <span class="label" id="progressLabel">Starting…</span>
+          <span class="pct" id="progressPct">0%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-bar-fill" id="progressFill"></div>
+        </div>
+      </div>
+      <div class="log-panel" id="logPanel"></div>
+      <div class="hidden" id="downloadWrap" style="margin-top:18px;">
+        <button class="btn btn-download" id="downloadBtn" onclick="downloadResult()">
+          ⬇️ &nbsp;Download Excel File
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let selectedFiles = [];
+    let extractedRolls = [];
+    let currentTaskId = null;
+
+    // ── File input handling ─────────────────────────────────────
+    const fileInput = document.getElementById('fileInput');
+    const dropzone  = document.getElementById('dropzone');
+
+    fileInput.addEventListener('change', (e) => {
+      addFiles(Array.from(e.target.files));
+      e.target.value = '';
+    });
+
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragging'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragging'));
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragging');
+      addFiles(Array.from(e.dataTransfer.files));
+    });
+
+    function addFiles(files) {
+      files.forEach(f => {
+        if (!selectedFiles.find(s => s.name === f.name && s.size === f.size)) {
+          selectedFiles.push(f);
+        }
+      });
+      renderFileList();
+    }
+
+    function removeFile(idx) {
+      selectedFiles.splice(idx, 1);
+      renderFileList();
+    }
+
+    function renderFileList() {
+      const el = document.getElementById('fileList');
+      if (!selectedFiles.length) { el.innerHTML = ''; return; }
+      el.innerHTML = selectedFiles.map((f, i) => `
+        <div class="file-item">
+          <span class="name">${esc(f.name)}</span>
+          <span class="size">${formatSize(f.size)}</span>
+          <button class="remove" onclick="removeFile(${i})" title="Remove">&times;</button>
+        </div>
+      `).join('');
+    }
+
+    function formatSize(b) {
+      if (b < 1024) return b + ' B';
+      if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+      return (b / 1048576).toFixed(1) + ' MB';
+    }
+
+    function esc(s) {
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    // ── Extract ─────────────────────────────────────────────────
+    async function extractRolls() {
+      const btn = document.getElementById('extractBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div> Extracting…';
+
+      const fd = new FormData();
+      selectedFiles.forEach(f => fd.append('files', f));
+      fd.append('manual', document.getElementById('manualInput').value);
+
+      try {
+        const res = await fetch('/extract', { method: 'POST', body: fd });
+        const data = await res.json();
+
+        extractedRolls = data.rolls || [];
+
+        // Show preview
+        const card = document.getElementById('previewCard');
+        card.classList.remove('hidden');
+
+        document.getElementById('rollCount').textContent = `${extractedRolls.length} roll numbers found`;
+
+        const preview = document.getElementById('rollPreview');
+        preview.innerHTML = extractedRolls.map(r => `<span class="roll-tag">${r}</span>`).join('');
+
+        // Warnings
+        const warnEl = document.getElementById('warnings');
+        if (data.warnings && data.warnings.length) {
+          warnEl.innerHTML = data.warnings.map(w =>
+            `<div class="warn-box">⚠️ <strong>${esc(w.file)}</strong>: ${esc(w.msg)}</div>`
+          ).join('');
+        } else {
+          warnEl.innerHTML = '';
+        }
+
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      } catch (err) {
+        alert('Extraction failed: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '🔍 &nbsp;Extract Roll Numbers';
+      }
+    }
+
+    // ── Run Scraper ─────────────────────────────────────────────
+    async function runScraper() {
+      if (!extractedRolls.length) { alert('No roll numbers to fetch.'); return; }
+
+      const runBtn = document.getElementById('runBtn');
+      runBtn.disabled = true;
+      runBtn.innerHTML = '<div class="spinner"></div> Starting…';
+
+      const examYear    = document.querySelector('input[name="exam_year"]:checked').value;
+      const resultsYear = document.getElementById('results_year').value;
+      const category    = document.getElementById('category').value;
+      const examType    = document.getElementById('exam_type').value;
+
+      const progCard = document.getElementById('progressCard');
+      progCard.classList.remove('hidden');
+      document.getElementById('logPanel').innerHTML = '';
+      document.getElementById('downloadWrap').classList.add('hidden');
+      document.getElementById('progressFill').style.width = '0%';
+      document.getElementById('progressPct').textContent = '0%';
+      document.getElementById('progressLabel').textContent = 'Starting…';
+
+      progCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      try {
+        const res = await fetch('/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            rolls: extractedRolls,
+            exam_year: examYear,
+            results_year: resultsYear,
+            category: category,
+            exam_type: examType
+          })
+        });
+
+        const data = await res.json();
+        if (data.error) { alert(data.error); return; }
+
+        currentTaskId = data.task_id;
+
+        // SSE stream
+        const evtSource = new EventSource('/stream/' + currentTaskId);
+        evtSource.onmessage = (e) => {
+          const msg = JSON.parse(e.data);
+          if (msg.type === 'ping') return;
+
+          if (msg.type === 'progress') {
+            const pct = Math.round((msg.current / msg.total) * 100);
+            document.getElementById('progressFill').style.width = pct + '%';
+            document.getElementById('progressPct').textContent = pct + '%';
+            document.getElementById('progressLabel').textContent = msg.msg;
+          }
+
+          if (msg.type === 'log') {
+            appendLog(msg.msg);
+          }
+
+          if (msg.type === 'done') {
+            appendLog('✅ ' + msg.msg, 'success');
+            document.getElementById('progressFill').style.width = '100%';
+            document.getElementById('progressPct').textContent = '100%';
+            document.getElementById('progressLabel').textContent = 'Complete!';
+            document.getElementById('downloadWrap').classList.remove('hidden');
+            runBtn.disabled = false;
+            runBtn.innerHTML = '🚀 &nbsp;Get Results';
+            evtSource.close();
+          }
+
+          if (msg.type === 'error') {
+            appendLog('❌ ' + msg.msg, 'error');
+            runBtn.disabled = false;
+            runBtn.innerHTML = '🚀 &nbsp;Get Results';
+            evtSource.close();
+          }
+        };
+
+        evtSource.onerror = () => {
+          appendLog('Connection lost.', 'error');
+          runBtn.disabled = false;
+          runBtn.innerHTML = '🚀 &nbsp;Get Results';
+          evtSource.close();
+        };
+
+      } catch (err) {
+        alert('Failed to start: ' + err.message);
+        runBtn.disabled = false;
+        runBtn.innerHTML = '🚀 &nbsp;Get Results';
+      }
+    }
+
+    function appendLog(text, cls = '') {
+      const panel = document.getElementById('logPanel');
+      const line = document.createElement('div');
+      line.className = 'log-line' + (cls ? ' ' + cls : '');
+      line.textContent = text;
+      panel.appendChild(line);
+      panel.scrollTop = panel.scrollHeight;
+    }
+
+    // ── Download ────────────────────────────────────────────────
+    function downloadResult() {
+      if (!currentTaskId) return;
+      window.location.href = '/download/' + currentTaskId;
+    }
+  </script>
+</body>
+</html>
